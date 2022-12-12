@@ -1,10 +1,20 @@
+import com.github.ajalt.clikt.core.subcommands
 import me.deotime.syncd.SyncdCommand
-import me.deotime.syncd.config.Config
 import kotlin.test.Test
-
-const val TestArgs = "testfolder"
 
 @Test
 fun main() {
-    SyncdCommand().main(TestArgs.split(" "))
+    while(true) {
+        val input = readLine()!!.removePrefix("syncd ")
+        command(input)
+    }
+}
+
+private fun command(input: String) {
+    SyncdCommand().subcommands(
+        SyncdCommand.Watch(),
+        SyncdCommand.Projects().subcommands(
+            SyncdCommand.Projects.Add()
+        )
+    ).main(input.split(" "))
 }

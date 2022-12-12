@@ -11,7 +11,9 @@ import kotlinx.serialization.serializer
 import me.deotime.syncd.config.project.Project
 import java.io.File
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KProperty
+import kotlin.reflect.KProperty1
 
 private val ConfigFile = File("config")
 private val RegisteredProperties = mutableListOf<Config.Property<Any?>>()
@@ -25,7 +27,8 @@ object Config {
 
 
     fun read() {
-        Json.decodeFromString(Serializer, ConfigFile.readText())
+        val data = ConfigFile.readText()
+        if(data.isNotBlank()) Json.decodeFromString(Serializer, data)
     }
 
     fun write() {
@@ -79,15 +82,15 @@ object Config {
             write()
         }
 
-        inline fun update(closure: (T) -> T) {
-            set(closure(get()))
-        }
-
 
 
     }
+
+    inline fun <T> KMutableProperty0<T>.update(closure: (T) -> T) {
+        (getDelegate() as Property<T>).let { it.set(it.get().let(closure)) }
+    }
     
-    internal inline fun <reified T : Any> property(default: T) = 
+    private inline fun <reified T : Any> property(default: T) =
         Property(serializer<T>(), default)
 
 
