@@ -10,10 +10,11 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.isActive
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
+import java.io.File
 import java.nio.file.Path
 import java.nio.file.StandardWatchEventKinds
 
-class Watcher(val path: Path) {
+class Watcher(private val path: Path) {
 
     suspend fun listen(): Flow<FileEvent> {
         return withContext(Dispatchers.IO) {
@@ -35,3 +36,5 @@ class Watcher(val path: Path) {
     }
 
 }
+
+fun File.watcher() = Watcher(toPath())
