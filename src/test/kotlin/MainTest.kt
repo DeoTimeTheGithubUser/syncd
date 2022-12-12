@@ -6,8 +6,5 @@ const val TestArgs = "testfolder"
 
 @Test
 fun main() {
-    println("Current config name: ${Config.Name}")
-    Config.Name = "test"
-    println("New config name: ${Config.Name}")
     SyncdCommand().main(TestArgs.split(" "))
 }
