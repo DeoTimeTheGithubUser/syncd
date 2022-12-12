@@ -1,4 +1,4 @@
-package me.deotime.syncd.config.project
+package me.deotime.syncd.project
 
 import com.github.ajalt.clikt.parameters.arguments.RawArgument
 import com.github.ajalt.clikt.parameters.arguments.convert
@@ -13,9 +13,9 @@ data class Project(
 )
 
 // this is incredibly scuffed and should be reworked (optics maybe?)
-inline fun Project.update(new: Project.() -> Project) {
+inline fun Project.update(new: Project.() -> Project?) {
     val projects = Config.Projects.associateBy { it.name }.toMutableMap()
-    projects[name] = new()
+    new()?.let { projects[name] = it } ?: projects.remove(name)
     Config.Projects = projects.values.toList()
 }
 

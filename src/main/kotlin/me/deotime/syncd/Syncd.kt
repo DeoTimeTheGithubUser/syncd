@@ -1,23 +1,28 @@
 package me.deotime.syncd
 
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.arguments.argument
-import com.github.ajalt.clikt.parameters.arguments.convert
-import com.github.ajalt.clikt.parameters.arguments.transformAll
-import com.github.ajalt.clikt.parameters.arguments.validate
-import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.file
-import com.github.ajalt.clikt.parameters.types.int
 import kotlinx.coroutines.runBlocking
 import me.deotime.syncd.config.Config
-import me.deotime.syncd.config.Config.update
-import me.deotime.syncd.config.project.Project
-import me.deotime.syncd.config.project.project
-import me.deotime.syncd.config.project.update
+import me.deotime.syncd.project.Project
+import me.deotime.syncd.project.project
+import me.deotime.syncd.project.update
 import me.deotime.syncd.watch.watcher
 import java.io.File
 
-class SyncdCommand : CliktCommand(name = "syncd") {
+fun main(args: Array<String>) {
+    Syncd().subcommands(
+        Syncd.Watch(),
+        Syncd.Projects().subcommands(
+            Syncd.Projects.Add(),
+            Syncd.Projects.Delete()
+        )
+    ).main(args)
+}
+
+class Syncd : CliktCommand(name = "syncd") {
 
 
     override fun run() {
@@ -54,6 +59,14 @@ class SyncdCommand : CliktCommand(name = "syncd") {
                 val proj = Project(name, directory.absolutePath)
                 Config.Projects = Config.Projects + proj
                 echo("Added project ${proj.name}")
+            }
+        }
+
+        class Delete : CliktCommand(name = "delete") {
+            private val project by argument().project()
+            override fun run() {
+                project.update { null }
+                echo("Removed project ${project.name}")
             }
         }
     }

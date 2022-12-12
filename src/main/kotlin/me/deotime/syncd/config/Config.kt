@@ -8,7 +8,7 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
-import me.deotime.syncd.config.project.Project
+import me.deotime.syncd.project.Project
 import java.io.File
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.reflect.KMutableProperty0
@@ -20,8 +20,6 @@ private val RegisteredProperties = mutableListOf<Config.Property<Any?>>()
 
 @Serializable(with = Config.Serializer::class)
 object Config {
-
-
 
     var Projects by property(listOf<Project>())
 
@@ -84,10 +82,6 @@ object Config {
 
 
 
-    }
-
-    inline fun <T> KMutableProperty0<T>.update(closure: (T) -> T) {
-        (getDelegate() as Property<T>).let { it.set(it.get().let(closure)) }
     }
     
     private inline fun <reified T : Any> property(default: T) =
