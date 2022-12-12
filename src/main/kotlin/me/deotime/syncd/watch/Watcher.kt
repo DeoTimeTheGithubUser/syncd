@@ -1,14 +1,11 @@
 package me.deotime.syncd.watch
 
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.isActive
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.file.Path
@@ -22,7 +19,8 @@ class Watcher(private val path: Path) {
             flow {
                 while (true) {
                     val watcher = path.fileSystem.newWatchService()
-                    path.register(watcher,
+                    path.register(
+                        watcher,
                         StandardWatchEventKinds.ENTRY_CREATE,
                         StandardWatchEventKinds.ENTRY_MODIFY,
                         StandardWatchEventKinds.ENTRY_DELETE

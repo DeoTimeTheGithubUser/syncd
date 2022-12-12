@@ -7,6 +7,7 @@ import java.nio.file.WatchEvent
 
 sealed interface FileEvent {
     val file: File
+
     data class Create(override val file: File) : FileEvent
     data class Modify(override val file: File) : FileEvent
     data class Delete(override val file: File) : FileEvent
@@ -14,7 +15,7 @@ sealed interface FileEvent {
 
 internal fun WatchEvent<*>.toFileEvent() = run {
     val context = (context() as Path).toFile()
-    when(kind()) {
+    when (kind()) {
         StandardWatchEventKinds.ENTRY_CREATE -> FileEvent.Create(context)
         StandardWatchEventKinds.ENTRY_MODIFY -> FileEvent.Modify(context)
         StandardWatchEventKinds.ENTRY_DELETE -> FileEvent.Delete(context)
