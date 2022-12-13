@@ -42,7 +42,7 @@ interface Storage {
 
     private fun write() {
         registerFile()
-        file().writeText(Json.encodeToString(this))
+        file().writeText(Json.encodeToString(Serializer, this))
     }
 
     private fun registerFile() {

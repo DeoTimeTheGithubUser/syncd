@@ -49,3 +49,5 @@ out/
 
 ### Jetbrains Fleet ###
 .fleet/
+
+.syncd
