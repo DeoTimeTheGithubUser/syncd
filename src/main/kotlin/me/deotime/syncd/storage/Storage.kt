@@ -3,7 +3,6 @@ package me.deotime.syncd.storage
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.Json
@@ -22,7 +21,6 @@ import java.io.File
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.reflect.KProperty
 
-private val RegisteredStorages = mutableMapOf<String, Storage>()
 
 // todo make this a seperate library and maybe make it not as weird
 @Serializable(with = Storage.Serializer::class)
@@ -123,8 +121,12 @@ interface Storage {
 
     }
 
+    companion object {
+        private val RegisteredStorages = mutableMapOf<String, Storage>()
+
+        inline fun <reified T : Any> Storage.property(default: T) = Property(serializer(), default)
+    }
+
 
 }
 
-inline fun <reified T : Any> Storage.property(default: T) =
-    Storage.Property(serializer(), default)

@@ -1,7 +1,7 @@
 package me.deotime.syncd.project
 
+import me.deotime.syncd.storage.Storage.Companion.property
 import me.deotime.syncd.storage.SyncdStorage
-import me.deotime.syncd.storage.property
 
 object Projects : SyncdStorage {
     override val name = "projects"
