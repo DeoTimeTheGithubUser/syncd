@@ -17,7 +17,6 @@ import java.io.File
 import java.nio.file.Path
 import java.nio.file.StandardWatchEventKinds
 
-object WatcherScope : CoroutineScope by CoroutineScope(Dispatchers.IO)
 
 class Watcher(private val path: Path) {
 
@@ -35,6 +34,8 @@ class Watcher(private val path: Path) {
             emitAll(update.pollEvents().map { it.toFileEvent() }.asFlow())
         }
     }.flowOn(Dispatchers.IO)
+
+    object Scope : CoroutineScope by CoroutineScope(Dispatchers.IO)
 
 }
 

@@ -4,21 +4,21 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.types.file
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import me.deotime.syncd.host.Host
 import me.deotime.syncd.project.Project
 import me.deotime.syncd.project.Projects
 import me.deotime.syncd.project.project
 import me.deotime.syncd.project.update
 import me.deotime.syncd.utils.toBase64
-import me.deotime.syncd.watch.WatcherScope
+import me.deotime.syncd.watch.Watcher
 import me.deotime.syncd.watch.watcher
 import java.io.File
 
 fun main(args: Array<String>) {
     Syncd().subcommands(
         Syncd.Watch(),
+        Syncd.HostProject(),
         Syncd.Projects().subcommands(
             Syncd.Projects.Add(),
             Syncd.Projects.Changes(),
@@ -32,20 +32,30 @@ private typealias ProjectsData = Projects
 class Syncd : CliktCommand(name = "syncd") {
 
 
-    override fun run() {
+    override fun run() = Unit
 
+    class HostProject : CliktCommand(name = "host") {
+        private val project by argument().project()
+
+        override fun run() {
+            Host.Scope.launch {
+                Host.hostProject(project).collect {
+                    println("Received update: $it")
+                }
+            }
+        }
     }
 
-    class Watch : CliktCommand("watch") {
+    class Watch : CliktCommand(name = "watch") {
 
         private val project by argument().project()
 
         override fun run() {
-            WatcherScope.launch {
+            Watcher.Scope.launch {
                 echo("Watching project ${project.name}.")
                 File(project.directory).watcher().listen().collect {
                     val value = it.file.absolutePath.toBase64()
-                    if(value in project.modified) return@collect
+                    if (value in project.modified) return@collect
                     project.update { copy(modified = modified + value) }
                 }
             }

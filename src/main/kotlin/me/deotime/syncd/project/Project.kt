@@ -9,7 +9,13 @@ data class Project(
     val name: String,
     val directory: String,
     val modified: List<String> = emptyList()
-)
+) {
+    @Serializable
+    data class Update(
+        val project: String,
+        val changes: Map<String, String>
+    )
+}
 
 inline fun Project.update(new: Project.() -> Project?) {
     val projects = Projects.All.toMutableMap()
