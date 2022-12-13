@@ -5,8 +5,8 @@ import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.types.file
 import kotlinx.coroutines.runBlocking
-import me.deotime.syncd.project.Projects
 import me.deotime.syncd.project.Project
+import me.deotime.syncd.project.Projects
 import me.deotime.syncd.project.project
 import me.deotime.syncd.project.update
 import me.deotime.syncd.watch.watcher
@@ -23,6 +23,7 @@ fun main(args: Array<String>) {
 }
 
 private typealias ProjectsData = Projects
+
 class Syncd : CliktCommand(name = "syncd") {
 
 

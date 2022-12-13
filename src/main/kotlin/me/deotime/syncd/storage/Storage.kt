@@ -6,7 +6,6 @@ import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import kotlinx.serialization.encoding.encodeStructure
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonDecoder
 import kotlinx.serialization.json.JsonEncoder
@@ -18,6 +17,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
 import kotlinx.serialization.serializer
+import me.deotime.syncd.storage.Storage.Property.Companion.properties
 import java.io.File
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.reflect.KProperty
@@ -26,12 +26,10 @@ private val RegisteredStorages = mutableMapOf<String, Storage>()
 
 // todo make this a seperate library and maybe make it not as weird
 @Serializable(with = Storage.Serializer::class)
-abstract class Storage {
+interface Storage {
 
-    abstract val root: String
-    abstract val name: String
-
-    private val properties = mutableListOf<Property<Any?>>()
+    val root: String
+    val name: String
 
 
     private fun file() = File(root, name)
@@ -49,7 +47,7 @@ abstract class Storage {
 
     private fun registerFile() {
         RegisteredStorages[name] = this
-        if(!file().exists()) {
+        if (!file().exists()) {
             File(root).mkdirs()
             file().createNewFile()
         }
@@ -78,14 +76,19 @@ abstract class Storage {
         }
 
         override fun deserialize(decoder: Decoder): Storage {
-            if(decoder !is JsonDecoder) error("Storage can only be deserialized as JSON.")
+            if (decoder !is JsonDecoder) error("Storage can only be deserialized as JSON.")
             val data = decoder.decodeJsonElement().jsonObject
             val name = data["name"]?.jsonPrimitive?.content
             return RegisteredStorages[name]?.apply {
                 val byName = properties.associateBy { it.name }
                 data["properties"]?.jsonArray?.forEach {
                     val property = byName[it.jsonObject["name"].toString()] ?: return@forEach
-                    property._value.set(Json.decodeFromString(property.valueSerializer, it.jsonObject["value"].toString()))
+                    property._value.set(
+                        Json.decodeFromString(
+                            property.valueSerializer,
+                            it.jsonObject["value"].toString()
+                        )
+                    )
                 }
             } ?: error("Unknown storage type found: $name")
         }
@@ -96,9 +99,10 @@ abstract class Storage {
         internal var _value: AtomicReference<T> = AtomicReference(default)
         internal lateinit var name: String
 
+
         operator fun provideDelegate(ref: Storage, prop: KProperty<*>): Property<T> {
-            @Suppress("UNCHECKED_cAST")
-            ref.properties += this as Property<Any?>
+            @Suppress("UNCHECKED_CAST")
+            Properties.computeIfAbsent(ref.name) { mutableListOf() } += this as Property<Any?>
             name = prop.name
             return this
         }
@@ -111,11 +115,16 @@ abstract class Storage {
             ref.write()
         }
 
+        companion object {
+            private val Properties = mutableMapOf<String, MutableList<Property<Any?>>>()
+            val Storage.properties get() = Properties[name] ?: mutableListOf()
+        }
+
 
     }
 
-    protected inline fun <reified T : Any> property(default: T) =
-        Property(serializer<T>(), default)
-
 
 }
+
+inline fun <reified T : Any> Storage.property(default: T) =
+    Storage.Property(serializer(), default)
