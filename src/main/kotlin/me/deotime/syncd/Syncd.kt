@@ -4,6 +4,8 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.types.file
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import me.deotime.syncd.project.Project
 import me.deotime.syncd.project.Projects
@@ -17,6 +19,7 @@ fun main(args: Array<String>) {
         Syncd.Watch(),
         Syncd.Projects().subcommands(
             Syncd.Projects.Add(),
+            Syncd.Projects.Changes(),
             Syncd.Projects.Delete()
         )
     ).main(args)
@@ -38,7 +41,7 @@ class Syncd : CliktCommand(name = "syncd") {
         override fun run() {
 
             echo("Watching project ${project.name}.")
-            runBlocking {
+            GlobalScope.launch {
                 File(project.directory).watcher().listen().collect {
                     project.update { copy(modified = modified + it.file.absolutePath) }
                 }
@@ -61,6 +64,17 @@ class Syncd : CliktCommand(name = "syncd") {
                 val proj = Project(name, directory.absolutePath)
                 ProjectsData.All = ProjectsData.All + (name to proj)
                 echo("Added project ${proj.name}")
+            }
+        }
+
+        class Changes : CliktCommand(name = "Changes") {
+            private val project by argument().project()
+
+            override fun run() {
+                echo("Current changes in ${project.name}")
+                project.modified.forEach {
+                    println("File: $it")
+                }
             }
         }
 

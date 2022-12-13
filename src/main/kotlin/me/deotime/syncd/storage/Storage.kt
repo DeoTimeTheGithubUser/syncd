@@ -80,7 +80,7 @@ interface Storage {
             return RegisteredStorages[name]?.apply {
                 val byName = properties.associateBy { it.name }
                 data["properties"]?.jsonArray?.forEach {
-                    val property = byName[it.jsonObject["name"].toString()] ?: return@forEach
+                    val property = byName[it.jsonObject["name"]?.jsonPrimitive?.content] ?: return@forEach
                     property._value.set(
                         Json.decodeFromString(
                             property.valueSerializer,

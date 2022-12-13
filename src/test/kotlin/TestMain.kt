@@ -1,16 +1,28 @@
 import me.deotime.syncd.main
-import kotlin.test.Test
 
-class TestMain {
+//class TestMain {
+//
+//    @Test
+//    fun projects() = runBlocking {
+//        syncd("projects add test C:/testproject")
+//        syncd("projects")
+//        delay(10_000)
+//        syncd("projects changes test")
+//    }
+//
+//
+//    private fun syncd(args: String) {
+//        main(args.split(" ").toTypedArray())
+//    }
+//}
 
-    @Test
-    fun projects() {
-        syncd("projects add test C:/testproject")
-        syncd("projects")
+fun main() {
+    while(true) {
+        val input = readLine()!!
+        syncd(input.removePrefix("syncd "))
     }
+}
 
-
-    private fun syncd(args: String) {
-        main(args.split(" ").toTypedArray())
-    }
+private fun syncd(args: String) {
+    main(args.split(" ").toTypedArray())
 }
