@@ -11,6 +11,7 @@ import me.deotime.syncd.project.Project
 import me.deotime.syncd.project.Projects
 import me.deotime.syncd.project.project
 import me.deotime.syncd.project.update
+import me.deotime.syncd.utils.toBase64
 import me.deotime.syncd.watch.WatcherScope
 import me.deotime.syncd.watch.watcher
 import java.io.File
@@ -43,7 +44,9 @@ class Syncd : CliktCommand(name = "syncd") {
             WatcherScope.launch {
                 echo("Watching project ${project.name}.")
                 File(project.directory).watcher().listen().collect {
-                    project.update { copy(modified = modified + it.file.absolutePath) }
+                    val value = it.file.absolutePath.toBase64()
+                    if(value in project.modified) return@collect
+                    project.update { copy(modified = modified + value) }
                 }
             }
 
