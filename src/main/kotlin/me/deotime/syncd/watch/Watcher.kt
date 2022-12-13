@@ -1,6 +1,9 @@
 package me.deotime.syncd.watch
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
@@ -13,6 +16,8 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.StandardWatchEventKinds
+
+object WatcherScope : CoroutineScope by CoroutineScope(Dispatchers.IO)
 
 class Watcher(private val path: Path) {
 

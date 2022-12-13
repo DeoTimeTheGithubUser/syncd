@@ -11,6 +11,7 @@ import me.deotime.syncd.project.Project
 import me.deotime.syncd.project.Projects
 import me.deotime.syncd.project.project
 import me.deotime.syncd.project.update
+import me.deotime.syncd.watch.WatcherScope
 import me.deotime.syncd.watch.watcher
 import java.io.File
 
@@ -39,9 +40,8 @@ class Syncd : CliktCommand(name = "syncd") {
         private val project by argument().project()
 
         override fun run() {
-
-            echo("Watching project ${project.name}.")
-            GlobalScope.launch {
+            WatcherScope.launch {
+                echo("Watching project ${project.name}.")
                 File(project.directory).watcher().listen().collect {
                     project.update { copy(modified = modified + it.file.absolutePath) }
                 }
@@ -67,7 +67,7 @@ class Syncd : CliktCommand(name = "syncd") {
             }
         }
 
-        class Changes : CliktCommand(name = "Changes") {
+        class Changes : CliktCommand(name = "changes") {
             private val project by argument().project()
 
             override fun run() {
