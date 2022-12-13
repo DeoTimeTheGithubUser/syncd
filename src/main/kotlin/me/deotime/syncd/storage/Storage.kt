@@ -8,6 +8,15 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.encoding.encodeStructure
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonEncoder
+import kotlinx.serialization.json.addJsonObject
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.put
+import kotlinx.serialization.json.putJsonArray
 import kotlinx.serialization.serializer
 import java.io.File
 import java.util.concurrent.atomic.AtomicReference
@@ -28,42 +37,58 @@ abstract class Storage {
     private fun file() = File(root, name)
 
     private fun read() {
-        if (!file().exists()) registerFile()
+        registerFile()
         val data = file().readText()
         if (data.isNotBlank()) Json.decodeFromString(Serializer, data)
     }
 
     private fun write() {
-        if (!file().exists()) registerFile()
+        registerFile()
         file().writeText(Json.encodeToString(this))
     }
 
     private fun registerFile() {
         RegisteredStorages[name] = this
-        File(root).mkdirs()
-        file().createNewFile()
+        if(!file().exists()) {
+            File(root).mkdirs()
+            file().createNewFile()
+        }
     }
 
     object Serializer : KSerializer<Storage> {
         override val descriptor = buildClassSerialDescriptor("Config")
 
         override fun serialize(encoder: Encoder, value: Storage) {
-            encoder.encodeString(value.name)
-            encoder.encodeInt(value.properties.size)
-            value.properties.forEach {
-                encoder.encodeString(it.name)
-                encoder.encodeSerializableValue(it.valueSerializer, it._value.get())
+
+            val data = buildJsonObject {
+                put("name", value.name)
+                putJsonArray("properties") {
+                    value.properties.forEach {
+                        addJsonObject {
+                            put("name", it.name)
+                            put("value", Json.encodeToJsonElement(it.valueSerializer, it._value.get()))
+                        }
+                    }
+                }
             }
+
+            (encoder as? JsonEncoder)?.encodeJsonElement(data) ?: error("Storage can only be serialized as JSON.")
+
 
         }
 
-        override fun deserialize(decoder: Decoder) = RegisteredStorages[decoder.decodeString()]?.apply {
-            val byName = properties.associateBy { it.name }
-            repeat(decoder.decodeInt()) {
-                val property = byName[decoder.decodeString()] ?: return@repeat
-                property._value.set(decoder.decodeSerializableValue(property.valueSerializer))
-            }
-        } ?: error("Unknown storage type found")
+        override fun deserialize(decoder: Decoder): Storage {
+            if(decoder !is JsonDecoder) error("Storage can only be deserialized as JSON.")
+            val data = decoder.decodeJsonElement().jsonObject
+            val name = data["name"]?.jsonPrimitive?.content
+            return RegisteredStorages[name]?.apply {
+                val byName = properties.associateBy { it.name }
+                data["properties"]?.jsonArray?.forEach {
+                    val property = byName[it.jsonObject["name"].toString()] ?: return@forEach
+                    property._value.set(Json.decodeFromString(property.valueSerializer, it.jsonObject["value"].toString()))
+                }
+            } ?: error("Unknown storage type found: $name")
+        }
     }
 
     class Property<T>(internal val valueSerializer: KSerializer<T>, default: T) {
