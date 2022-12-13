@@ -3,7 +3,10 @@ package me.deotime.syncd
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.arguments.argument
+import com.github.ajalt.clikt.parameters.options.flag
+import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.file
+import com.github.ajalt.clikt.parameters.types.long
 import kotlinx.coroutines.launch
 import me.deotime.syncd.project.Project
 import me.deotime.syncd.project.Projects
@@ -11,10 +14,13 @@ import me.deotime.syncd.project.project
 import me.deotime.syncd.project.update
 import me.deotime.syncd.remote.Host
 import me.deotime.syncd.remote.RemoteScope
+import me.deotime.syncd.remote.RemoteSync
+import me.deotime.syncd.remote.remote
 import me.deotime.syncd.utils.toBase64
 import me.deotime.syncd.watch.Watcher
 import me.deotime.syncd.watch.watcher
 import java.io.File
+import kotlin.time.Duration.Companion.milliseconds
 
 fun main(args: Array<String>) {
     Syncd().subcommands(
@@ -47,6 +53,19 @@ class Syncd : CliktCommand(name = "syncd") {
         }
     }
 
+    class Sync : CliktCommand(name = "sync") {
+
+        private val project by argument().project()
+        private val remote by argument().remote()
+        private val updateInterval by option().long()
+
+        override fun run() {
+            RemoteScope.launch {
+                RemoteSync.sync(project.id, remote, updateInterval?.milliseconds)
+            }
+        }
+    }
+
     class Watch : CliktCommand(name = "watch") {
 
         private val project by argument().project()
@@ -55,7 +74,7 @@ class Syncd : CliktCommand(name = "syncd") {
             Watcher.Scope.launch {
                 echo("Watching project ${project.id}.")
                 File(project.directory).watcher().listen().collect {
-                    val value = it.file.absolutePath.toBase64()
+                    val value = it.file.absolutePath
                     if (value in project.modified) return@collect
                     project.id.update { copy(modified = modified + value) }
                 }
@@ -101,4 +120,7 @@ class Syncd : CliktCommand(name = "syncd") {
             }
         }
     }
+
+    // todo
+    object Constants
 }

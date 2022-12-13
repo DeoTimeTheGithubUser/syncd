@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.isActive
 import me.deotime.syncd.project.Project
+import me.deotime.syncd.utils.ServerSockets
 import java.util.concurrent.atomic.AtomicBoolean
 
 
@@ -32,7 +33,7 @@ object Host {
     private fun initialize() {
         // TODO SECURITY
         embeddedServer(Netty) {
-            install(WebSockets)
+            install(ServerSockets)
             routing {
                 webSocket("/projecthost") {
                     while(isActive) {
