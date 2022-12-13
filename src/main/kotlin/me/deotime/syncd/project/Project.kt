@@ -3,7 +3,6 @@ package me.deotime.syncd.project
 import com.github.ajalt.clikt.parameters.arguments.RawArgument
 import com.github.ajalt.clikt.parameters.arguments.convert
 import kotlinx.serialization.Serializable
-import me.deotime.syncd.config.Config
 
 @Serializable
 data class Project(
@@ -12,12 +11,11 @@ data class Project(
     val modified: List<String> = emptyList()
 )
 
-// this is incredibly scuffed and should be reworked (optics maybe?)
 inline fun Project.update(new: Project.() -> Project?) {
-    val projects = Config.Projects.associateBy { it.name }.toMutableMap()
+    val projects = Projects.All.toMutableMap()
     new()?.let { projects[name] = it } ?: projects.remove(name)
-    Config.Projects = projects.values.toList()
+    Projects.All = projects
 }
 
 fun RawArgument.project() =
-    convert { input -> Config.Projects.firstOrNull { it.name == input } ?: error("No project found.") }
+    convert { name -> Projects[name] ?: error("No project found \"$name\".") }

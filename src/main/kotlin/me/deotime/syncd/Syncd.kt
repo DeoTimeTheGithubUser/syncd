@@ -5,7 +5,7 @@ import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.types.file
 import kotlinx.coroutines.runBlocking
-import me.deotime.syncd.config.Config
+import me.deotime.syncd.project.Projects
 import me.deotime.syncd.project.Project
 import me.deotime.syncd.project.project
 import me.deotime.syncd.project.update
@@ -22,6 +22,7 @@ fun main(args: Array<String>) {
     ).main(args)
 }
 
+private typealias ProjectsData = Projects
 class Syncd : CliktCommand(name = "syncd") {
 
 
@@ -48,7 +49,7 @@ class Syncd : CliktCommand(name = "syncd") {
     class Projects : CliktCommand(name = "projects", invokeWithoutSubcommand = true) {
         override fun run() {
             currentContext.invokedSubcommand ?: run {
-                echo("Projects: ${Config.Projects.map { it.name }}")
+                echo("Projects: ${ProjectsData.All.keys}")
             }
         }
 
@@ -57,7 +58,7 @@ class Syncd : CliktCommand(name = "syncd") {
             private val directory by argument().file(canBeDir = true, canBeFile = false, mustExist = true)
             override fun run() {
                 val proj = Project(name, directory.absolutePath)
-                Config.Projects = Config.Projects + proj
+                ProjectsData.All = ProjectsData.All + (name to proj)
                 echo("Added project ${proj.name}")
             }
         }

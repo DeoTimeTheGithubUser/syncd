@@ -5,7 +5,8 @@ class TestMain {
 
     @Test
     fun projects() {
-        syncd("projects delete test")
+        syncd("projects add test /test/")
+        syncd("projects")
     }
 
 
