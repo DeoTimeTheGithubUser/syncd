@@ -31,6 +31,7 @@ dependencies {
     implementation("io.ktor:ktor-server-core:2.2.1")
     implementation("io.ktor:ktor-server-netty:2.2.1")
     implementation("io.ktor:ktor-server-websockets:2.2.1")
+    implementation("io.ktor:ktor-client-websockets:2.2.1")
 }
 
 tasks.test {

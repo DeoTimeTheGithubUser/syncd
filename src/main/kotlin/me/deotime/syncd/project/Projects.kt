@@ -6,7 +6,7 @@ import me.deotime.syncd.storage.SyncdStorage
 object Projects : SyncdStorage {
     override val name = "projects"
 
-    var All by property(emptyMap<String, Project>())
+    var All by property(emptyMap<Project.Id, Project>())
 
-    operator fun get(name: String) = All[name]
+    operator fun get(id: Project.Id) = All[id]
 }

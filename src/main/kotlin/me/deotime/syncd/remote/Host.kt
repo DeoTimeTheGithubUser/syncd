@@ -1,4 +1,4 @@
-package me.deotime.syncd.host
+package me.deotime.syncd.remote
 
 import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
@@ -7,8 +7,6 @@ import io.ktor.server.routing.routing
 import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.receiveDeserialized
 import io.ktor.server.websocket.webSocket
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -20,16 +18,15 @@ import java.util.concurrent.atomic.AtomicBoolean
 object Host {
 
 
-    object Scope : CoroutineScope by CoroutineScope(Dispatchers.Default)
 
 
     private val initialized = AtomicBoolean(false)
-    private val projectHosts = mutableMapOf<String, Channel<Project.Update>>()
+    private val projectHosts = mutableMapOf<Project.Id, Channel<Project.Update>>()
 
-    fun hostProject(project: Project): Flow<Project.Update> {
+    fun hostProject(id: Project.Id): Flow<Project.Update> {
         if(!initialized.get()) initialize()
-        projectHosts[project.name]?.let { error("Project ${project.name} is already being hosted.") }
-        return Channel<Project.Update>().also { projectHosts[project.name] = it }.receiveAsFlow()
+        projectHosts[id]?.let { error("Project ${id.name} is already being hosted.") }
+        return Channel<Project.Update>().also { projectHosts[id] = it }.receiveAsFlow()
     }
 
     private fun initialize() {

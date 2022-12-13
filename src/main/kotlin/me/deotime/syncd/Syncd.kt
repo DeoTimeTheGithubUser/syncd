@@ -5,11 +5,12 @@ import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.types.file
 import kotlinx.coroutines.launch
-import me.deotime.syncd.host.Host
 import me.deotime.syncd.project.Project
 import me.deotime.syncd.project.Projects
 import me.deotime.syncd.project.project
 import me.deotime.syncd.project.update
+import me.deotime.syncd.remote.Host
+import me.deotime.syncd.remote.RemoteScope
 import me.deotime.syncd.utils.toBase64
 import me.deotime.syncd.watch.Watcher
 import me.deotime.syncd.watch.watcher
@@ -38,8 +39,8 @@ class Syncd : CliktCommand(name = "syncd") {
         private val project by argument().project()
 
         override fun run() {
-            Host.Scope.launch {
-                Host.hostProject(project).collect {
+            RemoteScope.launch {
+                Host.hostProject(project.id).collect {
                     println("Received update: $it")
                 }
             }
@@ -52,11 +53,11 @@ class Syncd : CliktCommand(name = "syncd") {
 
         override fun run() {
             Watcher.Scope.launch {
-                echo("Watching project ${project.name}.")
+                echo("Watching project ${project.id}.")
                 File(project.directory).watcher().listen().collect {
                     val value = it.file.absolutePath.toBase64()
                     if (value in project.modified) return@collect
-                    project.update { copy(modified = modified + value) }
+                    project.id.update { copy(modified = modified + value) }
                 }
             }
 
@@ -74,9 +75,10 @@ class Syncd : CliktCommand(name = "syncd") {
             private val name by argument()
             private val directory by argument().file(canBeDir = true, canBeFile = false, mustExist = true)
             override fun run() {
-                val proj = Project(name, directory.absolutePath)
-                ProjectsData.All = ProjectsData.All + (name to proj)
-                echo("Added project ${proj.name}")
+                val id = Project.Id(name)
+                val proj = Project(id, directory.absolutePath)
+                ProjectsData.All = ProjectsData.All + (id to proj)
+                echo("Added project $name")
             }
         }
 
@@ -84,7 +86,7 @@ class Syncd : CliktCommand(name = "syncd") {
             private val project by argument().project()
 
             override fun run() {
-                echo("Current changes in ${project.name}")
+                echo("Current changes in ${project.id}")
                 project.modified.forEach {
                     println("File: $it")
                 }
@@ -94,8 +96,8 @@ class Syncd : CliktCommand(name = "syncd") {
         class Delete : CliktCommand(name = "delete") {
             private val project by argument().project()
             override fun run() {
-                project.update { null }
-                echo("Removed project ${project.name}")
+                project.id.update { null }
+                echo("Removed project ${project.id}")
             }
         }
     }
