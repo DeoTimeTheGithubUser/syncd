@@ -13,7 +13,8 @@ data class Project(
     val modified: List<String> = emptyList()
 ) {
 
-    @Serializable @JvmInline
+    @Serializable
+    @JvmInline
     value class Id(val name: String) {
         override fun toString() = name
     }

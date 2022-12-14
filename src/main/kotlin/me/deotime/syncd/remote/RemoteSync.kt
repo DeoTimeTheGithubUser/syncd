@@ -34,7 +34,7 @@ object RemoteSync {
             port = remote.port,
             path = Syncd.Constants.HostSocketPath
         ) {
-            while(isActive) {
+            while (isActive) {
                 sendSerialized(
                     Project.Update(
                         project,
