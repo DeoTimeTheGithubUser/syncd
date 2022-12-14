@@ -13,7 +13,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.isActive
 import me.deotime.syncd.project.Project
+import me.deotime.syncd.project.Projects
 import me.deotime.syncd.utils.ServerSockets
+import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
 
 
@@ -29,6 +31,14 @@ object Host {
         if(!initialized.get()) initialize()
         projectHosts[id]?.let { error("Project ${id.name} is already being hosted.") }
         return Channel<Project.Update>().also { projectHosts[id] = it }.receiveAsFlow()
+    }
+
+    fun processUpdate(update: Project.Update) {
+        val project = Projects[update.project] ?: return
+        update.changes.forEach { (relative, content) ->
+            val file = File(project.directory, relative)
+            file.writeText(content)
+        }
     }
 
     private fun initialize() {
