@@ -18,6 +18,7 @@ import me.deotime.syncd.remote.Host
 import me.deotime.syncd.remote.RemoteSync
 import me.deotime.syncd.remote.remote
 import me.deotime.syncd.utils.FileSelector
+import me.deotime.syncd.utils.duration
 import me.deotime.syncd.watch.watcher
 import java.io.File
 import kotlin.time.Duration.Companion.milliseconds
@@ -83,10 +84,10 @@ class Syncd : SyncdCommand(name = "syncd") {
 
         private val project by argument().project()
         private val remote by argument().remote()
-        private val updateInterval by option().long()
+        private val updateInterval by argument().duration().optional()
 
         override suspend fun execute() {
-            RemoteSync.sync(project.id, remote, updateInterval?.milliseconds)
+            RemoteSync.sync(project.id, remote, updateInterval)
         }
     }
 
