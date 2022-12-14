@@ -1,5 +1,5 @@
 package me.deotime.syncd.storage
 
-interface SyncdStorage : Storage {
-    override val root get() = ".syncd"
+interface SyncdStorage : AppdataStorage {
+    override val root get() = super.root + "Syncd"
 }

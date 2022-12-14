@@ -36,7 +36,7 @@ dependencies {
     implementation("io.ktor:ktor-client-websockets:2.2.1")
 
     // logging
-    implementation("ch.qos.logback:logback-classic:1.2.3")
+    implementation("ch.qos.logback:logback-classic:1.4.5")
 }
 
 tasks.test {
@@ -45,6 +45,18 @@ tasks.test {
 
 tasks.withType<KotlinCompile> {
     kotlinOptions.jvmTarget = "1.8"
+}
+
+tasks.withType<Jar> {
+
+    name
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest {
+        attributes("Main-Class" to "me.deotime.syncd.SyncdKt")
+    }
+    configurations["compileClasspath"].forEach { file: File ->
+        from(zipTree(file.absoluteFile))
+    }
 }
 
 application {
