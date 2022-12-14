@@ -17,7 +17,6 @@ dependencies {
     testImplementation(kotlin("test"))
 
 
-
     // cli
     implementation("com.github.ajalt.clikt:clikt:3.5.0")
 
@@ -48,8 +47,6 @@ tasks.withType<KotlinCompile> {
 }
 
 tasks.withType<Jar> {
-
-    name
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     manifest {
         attributes("Main-Class" to "me.deotime.syncd.SyncdKt")
