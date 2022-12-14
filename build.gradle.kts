@@ -34,6 +34,9 @@ dependencies {
     implementation("io.ktor:ktor-client-cio:2.2.1")
     implementation("io.ktor:ktor-server-websockets:2.2.1")
     implementation("io.ktor:ktor-client-websockets:2.2.1")
+
+    // logging
+    implementation("ch.qos.logback:logback-classic:1.2.3")
 }
 
 tasks.test {
@@ -45,5 +48,5 @@ tasks.withType<KotlinCompile> {
 }
 
 application {
-    mainClass.set("MainKt")
+    mainClass.set("me.deotime.syncd.SyncdKt")
 }

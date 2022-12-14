@@ -1,6 +1,7 @@
 package me.deotime.syncd.remote
 
 import io.ktor.server.application.install
+import io.ktor.server.config.configLoaders
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.routing.routing
@@ -32,7 +33,7 @@ object Host {
 
     private fun initialize() {
         // TODO SECURITY
-        embeddedServer(Netty) {
+        val server = embeddedServer(Netty) {
             install(ServerSockets)
             routing {
                 webSocket("/projecthost") {
@@ -44,6 +45,8 @@ object Host {
                 }
             }
         }
+
+        println("Started host server with properties: ${server.environment.connectors}")
     }
 
 

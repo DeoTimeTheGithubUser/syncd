@@ -11,8 +11,8 @@ data class Project(
     val modified: List<String> = emptyList()
 ) {
 
-    @Serializable
-    data class Id(val name: String) {
+    @Serializable @JvmInline
+    value class Id(val name: String) {
         override fun toString() = name
     }
 
@@ -30,4 +30,5 @@ inline fun Project.Id.update(new: Project.() -> Project?) {
 }
 
 fun RawArgument.project() =
-    convert { name -> Projects[Project.Id(name)] ?: error("No project found \"$name\".") }
+    // TEMPORARY FIX UNTIL WE FIND OUT WHY INLINE CLASSES ARE BROKEN
+    convert { name -> Projects.All.entries.find { it.key.name == name }?.value ?: error("No project found \"$name\".") }
