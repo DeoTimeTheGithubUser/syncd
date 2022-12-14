@@ -25,7 +25,7 @@ object FileSelector {
         directories: Boolean = true,
         filter: (File?) -> Boolean = { true }
     ): File? {
-        val frame = JFrame("test").apply { isVisible = true }
+        val frame = JFrame().apply { isVisible = true }
         frame.defaultCloseOperation = JFrame.DISPOSE_ON_CLOSE
         val selector = JFileChooser().apply {
             fileSelectionMode = when {
