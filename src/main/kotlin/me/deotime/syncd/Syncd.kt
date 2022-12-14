@@ -4,31 +4,28 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.optional
-import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.file
-import com.github.ajalt.clikt.parameters.types.long
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import me.deotime.syncd.project.Project
 import me.deotime.syncd.project.Projects
 import me.deotime.syncd.project.project
 import me.deotime.syncd.project.update
-import me.deotime.syncd.remote.Host
 import me.deotime.syncd.remote.RemoteSync
 import me.deotime.syncd.remote.remote
 import me.deotime.syncd.utils.FileSelector
 import me.deotime.syncd.utils.duration
 import me.deotime.syncd.watch.watcher
 import java.io.File
-import kotlin.time.Duration.Companion.milliseconds
 
 fun main(args: Array<String>) {
     Syncd().subcommands(
         Syncd.Watch(),
         Syncd.Sync(),
         Syncd.Changes(),
-        Syncd.HostProject(),
+        Syncd.Host(),
         Syncd.Projects().subcommands(
             Syncd.Projects.Add(),
             Syncd.Projects.Delete()
@@ -50,10 +47,9 @@ abstract class SyncdCommand(
     invokeWithoutSubcommand = invokeWithoutSubcommand
 ) {
 
-    private val scope = CoroutineScope(Dispatchers.Default)
 
     final override fun run() {
-        scope.launch { execute() }
+        runBlocking { execute() }
     }
 
     open suspend fun execute() = Unit
@@ -61,7 +57,7 @@ abstract class SyncdCommand(
 
 class Syncd : SyncdCommand(name = "syncd") {
 
-    class HostProject : SyncdCommand(
+    class Host : SyncdCommand(
         name = "host",
         help = "Host a project.",
         description = Constants.HostDescription
@@ -69,9 +65,9 @@ class Syncd : SyncdCommand(name = "syncd") {
         private val project by argument().project()
 
         override suspend fun execute() {
-            Host.hostProject(project.id).collect {
+            me.deotime.syncd.remote.Host.hostProject(project.id).collect {
                 println("Received update: $it")
-                Host.processUpdate(it)
+                me.deotime.syncd.remote.Host.processUpdate(it)
             }
         }
     }
