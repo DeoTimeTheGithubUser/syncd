@@ -12,6 +12,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.isActive
+import me.deotime.syncd.Syncd
 import me.deotime.syncd.project.Project
 import me.deotime.syncd.project.Projects
 import me.deotime.syncd.utils.ServerSockets
@@ -46,7 +47,7 @@ object Host {
         val server = embeddedServer(Netty) {
             install(ServerSockets)
             routing {
-                webSocket("/projecthost") {
+                webSocket(Syncd.Constants.HostSocketPath) {
                     while(isActive) {
                         val update = receiveDeserialized<Project.Update>()
                         val host = projectHosts[update.project] ?: continue

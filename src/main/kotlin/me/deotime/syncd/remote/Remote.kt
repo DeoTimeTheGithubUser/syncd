@@ -2,9 +2,9 @@ package me.deotime.syncd.remote
 
 import com.github.ajalt.clikt.parameters.arguments.RawArgument
 import com.github.ajalt.clikt.parameters.arguments.convert
+import com.github.ajalt.clikt.parameters.arguments.help
 import kotlinx.serialization.Serializable
-import me.deotime.syncd.project.Project
-import me.deotime.syncd.project.Projects
+import me.deotime.syncd.Syncd
 
 @Serializable
 data class Remote(val ip: String, val port: Int)
@@ -21,4 +21,4 @@ fun RawArgument.remote() =
         }.getOrNull() ?: error("Invalid remote \"$input\".")
 
 
-    }
+    }.help(Syncd.Constants.RemoteArgumentHelp)

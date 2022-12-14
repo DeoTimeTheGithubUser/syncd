@@ -2,7 +2,9 @@ package me.deotime.syncd.project
 
 import com.github.ajalt.clikt.parameters.arguments.RawArgument
 import com.github.ajalt.clikt.parameters.arguments.convert
+import com.github.ajalt.clikt.parameters.arguments.help
 import kotlinx.serialization.Serializable
+import me.deotime.syncd.Syncd
 
 @Serializable
 data class Project(
@@ -32,3 +34,4 @@ inline fun Project.Id.update(new: Project.() -> Project?) {
 fun RawArgument.project() =
     // TEMPORARY FIX UNTIL WE FIND OUT WHY INLINE CLASSES ARE BROKEN
     convert { name -> Projects.All.entries.find { it.key.name == name }?.value ?: error("No project found \"$name\".") }
+        .help(Syncd.Constants.ProjectArgumentHelp)

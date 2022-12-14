@@ -7,6 +7,7 @@ import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.http.HttpMethod
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import me.deotime.syncd.Syncd
 import me.deotime.syncd.project.Project
 import me.deotime.syncd.project.Projects
 import me.deotime.syncd.project.update
@@ -31,7 +32,7 @@ object RemoteSync {
             HttpMethod.Post,
             host = remote.ip,
             port = remote.port,
-            path = "/projecthost"
+            path = Syncd.Constants.HostSocketPath
         ) {
             while(isActive) {
                 sendSerialized(

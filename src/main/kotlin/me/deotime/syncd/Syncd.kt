@@ -23,10 +23,10 @@ import kotlin.time.Duration.Companion.milliseconds
 fun main(args: Array<String>) {
     Syncd().subcommands(
         Syncd.Watch(),
+        Syncd.Changes(),
         Syncd.HostProject(),
         Syncd.Projects().subcommands(
             Syncd.Projects.Add(),
-            Syncd.Projects.Changes(),
             Syncd.Projects.Delete()
         )
     ).main(args)
@@ -39,7 +39,11 @@ class Syncd : CliktCommand(name = "syncd") {
 
     override fun run() = Unit
 
-    class HostProject : CliktCommand(name = "host") {
+    class HostProject : CliktCommand(
+        name = "host",
+        help = "Host a project.",
+        epilog = Constants.HostDescription
+    ) {
         private val project by argument().project()
 
         override fun run() {
@@ -52,7 +56,11 @@ class Syncd : CliktCommand(name = "syncd") {
         }
     }
 
-    class Sync : CliktCommand(name = "sync") {
+    class Sync : CliktCommand(
+        name = "sync",
+        help = "Syncs a project to a remote.",
+        epilog = Constants.SyncDescription
+    ) {
 
         private val project by argument().project()
         private val remote by argument().remote()
@@ -65,7 +73,11 @@ class Syncd : CliktCommand(name = "syncd") {
         }
     }
 
-    class Watch : CliktCommand(name = "watch") {
+    class Watch : CliktCommand(
+        name = "watch",
+        help = "Begins watching a project.",
+        epilog = Syncd.Constants.WatchDescription
+    ) {
 
         private val project by argument().project()
 
@@ -82,14 +94,35 @@ class Syncd : CliktCommand(name = "syncd") {
         }
     }
 
-    class Projects : CliktCommand(name = "projects", invokeWithoutSubcommand = true) {
+    class Changes : CliktCommand(
+        name = "changes",
+        help = "Current file changes in a project.",
+        epilog = Syncd.Constants.ChangesProjectHelp
+    ) {
+        private val project by argument().project()
+
+        override fun run() {
+            echo("Current changes in ${project.id}")
+            project.modified.forEach {
+                println("File: $it")
+            }
+        }
+    }
+
+    class Projects : CliktCommand(
+        name = "projects",
+        invokeWithoutSubcommand = true
+    ) {
         override fun run() {
             currentContext.invokedSubcommand ?: run {
                 echo("Projects: ${ProjectsData.All.keys}")
             }
         }
 
-        class Add : CliktCommand(name = "add") {
+        class Add : CliktCommand(
+            name = "add",
+            help = "Creates a new project."
+        ) {
             private val name by argument()
             private val directory by argument().file(canBeDir = true, canBeFile = false, mustExist = true)
             override fun run() {
@@ -100,18 +133,12 @@ class Syncd : CliktCommand(name = "syncd") {
             }
         }
 
-        class Changes : CliktCommand(name = "changes") {
-            private val project by argument().project()
+        class Delete : CliktCommand(
+            name = "delete",
+            help = "Deletes a project.",
+            epilog = Syncd.Constants.DeleteProjectHelp
 
-            override fun run() {
-                echo("Current changes in ${project.id}")
-                project.modified.forEach {
-                    println("File: $it")
-                }
-            }
-        }
-
-        class Delete : CliktCommand(name = "delete") {
+        ) {
             private val project by argument().project()
             override fun run() {
                 project.id.update { null }
@@ -120,6 +147,40 @@ class Syncd : CliktCommand(name = "syncd") {
         }
     }
 
-    // todo
-    object Constants
+    object Constants {
+        const val HostDescription = """
+            Starts a host to a project on this machine. This will allow
+            other devices to connect to this as a remote, and upload
+            its files a corresponding project.
+        """
+
+        const val SyncDescription = """
+            Syncs a project to a remote host. This will send all currently
+            watched files that have been modified, and replicate them in the
+            corresponding project on the host.
+        """
+
+        const val WatchDescription = """
+            Starts watching a project. This will track all files that
+            are created, modified, or deleted in a directory. These can
+            then be used to automatically sync files to a remote host.
+        """
+
+        const val DeleteProjectHelp = """
+            Deletes a project, permanently. Note that this only deletes
+            the local instance of the projects, and does not delete
+            files locally or on a remote.
+        """
+
+        const val ChangesProjectHelp = """
+            Displays all current file changes in a project. Changes are
+            only tracked while a project is being actively watdched.
+        """
+
+        const val ProjectArgumentHelp = "Name of a project. Use 'syncd projects' to find all created projects."
+        const val RemoteArgumentHelp = "A remote address. Format should be {IP}:{PORT}."
+
+
+        const val HostSocketPath = "/projecthost"
+    }
 }

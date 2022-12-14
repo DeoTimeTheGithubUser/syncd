@@ -16,6 +16,7 @@ import me.deotime.syncd.main
 //    }
 //}
 
+
 fun main() {
     while(true) {
         val input = readLine()!!
