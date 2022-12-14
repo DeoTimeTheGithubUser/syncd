@@ -9,10 +9,15 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import javax.swing.JFileChooser
 import javax.swing.JFrame
+import javax.swing.UIManager
 import javax.swing.filechooser.FileFilter
 
 
 object FileSelector {
+
+    init {
+        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())
+    }
 
     suspend fun selectFile(
         prompt: String = "Select file",
