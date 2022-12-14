@@ -3,19 +3,21 @@ package me.deotime.syncd
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.arguments.argument
+import com.github.ajalt.clikt.parameters.arguments.optional
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.long
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import me.deotime.syncd.project.Project
 import me.deotime.syncd.project.Projects
 import me.deotime.syncd.project.project
 import me.deotime.syncd.project.update
 import me.deotime.syncd.remote.Host
-import me.deotime.syncd.remote.RemoteScope
 import me.deotime.syncd.remote.RemoteSync
 import me.deotime.syncd.remote.remote
-import me.deotime.syncd.watch.Watcher
+import me.deotime.syncd.utils.FileSelector
 import me.deotime.syncd.watch.watcher
 import java.io.File
 import kotlin.time.Duration.Companion.milliseconds
@@ -23,6 +25,7 @@ import kotlin.time.Duration.Companion.milliseconds
 fun main(args: Array<String>) {
     Syncd().subcommands(
         Syncd.Watch(),
+        Syncd.Sync(),
         Syncd.Changes(),
         Syncd.HostProject(),
         Syncd.Projects().subcommands(
@@ -34,115 +37,133 @@ fun main(args: Array<String>) {
 
 private typealias ProjectsData = Projects
 
-class Syncd : CliktCommand(name = "syncd") {
+abstract class SyncdCommand(
+    name: String,
+    help: String = "",
+    description: String = "",
+    invokeWithoutSubcommand: Boolean = false
+) : CliktCommand(
+    name = name,
+    help = help,
+    epilog = description,
+    invokeWithoutSubcommand = invokeWithoutSubcommand
+) {
 
+    private val scope = CoroutineScope(Dispatchers.Default)
 
-    override fun run() = Unit
+    final override fun run() {
+        scope.launch { execute() }
+    }
 
-    class HostProject : CliktCommand(
+    open suspend fun execute() = Unit
+}
+
+class Syncd : SyncdCommand(name = "syncd") {
+
+    class HostProject : SyncdCommand(
         name = "host",
         help = "Host a project.",
-        epilog = Constants.HostDescription
+        description = Constants.HostDescription
     ) {
         private val project by argument().project()
 
-        override fun run() {
-            RemoteScope.launch {
-                Host.hostProject(project.id).collect {
-                    println("Received update: $it")
-                    Host.processUpdate(it)
-                }
+        override suspend fun execute() {
+            Host.hostProject(project.id).collect {
+                println("Received update: $it")
+                Host.processUpdate(it)
             }
         }
     }
 
-    class Sync : CliktCommand(
+    class Sync : SyncdCommand(
         name = "sync",
         help = "Syncs a project to a remote.",
-        epilog = Constants.SyncDescription
+        description = Constants.SyncDescription
     ) {
 
         private val project by argument().project()
         private val remote by argument().remote()
         private val updateInterval by option().long()
 
-        override fun run() {
-            RemoteScope.launch {
-                RemoteSync.sync(project.id, remote, updateInterval?.milliseconds)
-            }
+        override suspend fun execute() {
+            RemoteSync.sync(project.id, remote, updateInterval?.milliseconds)
         }
     }
 
-    class Watch : CliktCommand(
+    class Watch : SyncdCommand(
         name = "watch",
         help = "Begins watching a project.",
-        epilog = Syncd.Constants.WatchDescription
+        description = Constants.WatchDescription
     ) {
 
         private val project by argument().project()
 
-        override fun run() {
-            Watcher.Scope.launch {
-                echo("Watching project ${project.id}.")
-                File(project.directory).watcher().listen().collect {
-                    val value = it.file.absolutePath.removePrefix(project.directory)
-                    if (value in project.modified) return@collect
-                    project.id.update { copy(modified = modified + value) }
-                }
+        override suspend fun execute() {
+            println("Watching project ${project.id}.")
+            File(project.directory).watcher().listen().collect {
+                val value = it.file.absolutePath.removePrefix(project.directory)
+                if (value in project.modified) return@collect
+                project.id.update { copy(modified = modified + value) }
             }
-
         }
     }
 
-    class Changes : CliktCommand(
+    class Changes : SyncdCommand(
         name = "changes",
         help = "Current file changes in a project.",
-        epilog = Syncd.Constants.ChangesProjectHelp
+        description = Constants.ChangesProjectHelp
     ) {
         private val project by argument().project()
 
-        override fun run() {
-            echo("Current changes in ${project.id}")
+        override suspend fun execute() {
+            println("Current changes in ${project.id}")
             project.modified.forEach {
                 println("File: $it")
             }
         }
     }
 
-    class Projects : CliktCommand(
+    class Projects : SyncdCommand(
         name = "projects",
         invokeWithoutSubcommand = true
     ) {
-        override fun run() {
+        override suspend fun execute() {
             currentContext.invokedSubcommand ?: run {
-                echo("Projects: ${ProjectsData.All.keys}")
+                println("Projects: ${ProjectsData.All.keys}")
             }
         }
 
-        class Add : CliktCommand(
+        class Add : SyncdCommand(
             name = "add",
             help = "Creates a new project."
         ) {
             private val name by argument()
-            private val directory by argument().file(canBeDir = true, canBeFile = false, mustExist = true)
-            override fun run() {
+            private val directory by argument()
+                .file(canBeDir = true, canBeFile = false)
+                .optional()
+
+            override suspend fun execute() {
                 val id = Project.Id(name)
-                val proj = Project(id, directory.absolutePath)
+                val selected = (directory ?: FileSelector.selectFile(
+                    "Choose project directory",
+                    directories = true,
+                    files = false
+                )) ?: return
+                val proj = Project(id, selected.absolutePath)
                 ProjectsData.All = ProjectsData.All + (id to proj)
-                echo("Added project $name")
+                println("Added project $name")
             }
         }
 
-        class Delete : CliktCommand(
+        class Delete : SyncdCommand(
             name = "delete",
             help = "Deletes a project.",
-            epilog = Syncd.Constants.DeleteProjectHelp
-
+            description = Constants.DeleteProjectHelp
         ) {
             private val project by argument().project()
-            override fun run() {
+            override suspend fun execute() {
                 project.id.update { null }
-                echo("Removed project ${project.id}")
+                println("Removed project ${project.id}")
             }
         }
     }
@@ -184,3 +205,5 @@ class Syncd : CliktCommand(name = "syncd") {
         const val HostSocketPath = "/projecthost"
     }
 }
+
+

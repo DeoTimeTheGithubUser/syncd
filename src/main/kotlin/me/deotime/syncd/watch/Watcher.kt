@@ -30,8 +30,6 @@ class Watcher(private val path: Path) {
         }
     }.flowOn(Dispatchers.IO)
 
-    object Scope : CoroutineScope by CoroutineScope(Dispatchers.IO)
-
 }
 
 fun File.watcher() = Watcher(toPath())
