@@ -7,13 +7,15 @@ import kotlinx.serialization.Serializable
 import me.deotime.syncd.Syncd
 
 @Serializable
-data class Remote(val ip: String, val port: Int)
+data class Remote(val ip: String, val port: Int) {
+    override fun toString() = "$ip:$port"
+}
 
 
 fun RawArgument.remote() =
     convert { input ->
 
-        runCatching {
+        Remotes[input] ?: runCatching {
             val split = input.split(":")
             val ip = split[0]
             val port = split[1].toInt()

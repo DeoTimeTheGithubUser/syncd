@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.reflect.KProperty
 
 
-// todo make this a seperate library and maybe make it not as weird
+// todo: redo how read/write on properties is done, change pseudomutability to optics
 @Serializable(with = Storage.Serializer::class)
 interface Storage {
 
@@ -112,12 +112,14 @@ interface Storage {
         }
 
 
-        operator fun getValue(ref: Storage, prop: KProperty<*>): T = ref.read().let { _value.get() }
+        operator fun getValue(ref: Storage, prop: KProperty<*>?): T = ref.read().let { _value.get() }
 
         operator fun setValue(ref: Storage, prop: KProperty<*>, new: T) {
             _value.set(new)
             ref.write()
         }
+
+        suspend operator fun not(): Property<T> = this
 
         companion object {
             private val Properties = mutableMapOf<String, MutableList<Property<Any?>>>()

@@ -5,15 +5,13 @@ import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.optional
 import com.github.ajalt.clikt.parameters.types.file
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import me.deotime.syncd.project.Project
 import me.deotime.syncd.project.Projects
 import me.deotime.syncd.project.project
 import me.deotime.syncd.project.update
 import me.deotime.syncd.remote.RemoteSync
+import me.deotime.syncd.remote.Remotes
 import me.deotime.syncd.remote.remote
 import me.deotime.syncd.utils.FileSelector
 import me.deotime.syncd.utils.duration
@@ -24,16 +22,16 @@ fun main(args: Array<String>) {
     Syncd().subcommands(
         Syncd.Watch(),
         Syncd.Sync(),
+        Syncd.Remote(),
         Syncd.Changes(),
         Syncd.Host(),
-        Syncd.Projects().subcommands(
-            Syncd.Projects.Add(),
-            Syncd.Projects.Delete()
+        Syncd.Project().subcommands(
+            Syncd.Project.Add(),
+            Syncd.Project.Delete()
         )
     ).main(args)
 }
 
-private typealias ProjectsData = Projects
 
 abstract class SyncdCommand(
     name: String,
@@ -68,6 +66,43 @@ class Syncd : SyncdCommand(name = "syncd") {
             me.deotime.syncd.remote.Host.hostProject(project.id).collect {
                 println("Received update: $it")
                 me.deotime.syncd.remote.Host.processUpdate(it)
+            }
+        }
+    }
+
+    class Remote : SyncdCommand(
+        name = "remote",
+        help = "Lists all remotes",
+        invokeWithoutSubcommand = true
+    ) {
+        override suspend fun execute() {
+            currentContext.invokedSubcommand ?: run {
+                println("Remotes: ${Remotes.All}")
+            }
+        }
+
+        class Add : SyncdCommand(
+            name = "add",
+            help = "Creates a new remote."
+        ) {
+            private val name by argument()
+            private val remote by argument().remote()
+
+            override suspend fun execute() {
+                Remotes.All = Remotes.All + (name to remote)
+                println("Added remote $name ($remote)")
+            }
+        }
+
+        class Delete : SyncdCommand(
+            name = "delete",
+            help = "Deletes a remote.",
+            description = Constants.DeleteProjectHelp
+        ) {
+            private val remote by argument().remote()
+            override suspend fun execute() {
+                Remotes.All = Remotes.All.filter { it.value != remote }
+                println("Removed remote $remote.")
             }
         }
     }
@@ -120,13 +155,13 @@ class Syncd : SyncdCommand(name = "syncd") {
         }
     }
 
-    class Projects : SyncdCommand(
-        name = "projects",
+    class Project : SyncdCommand(
+        name = "project",
         invokeWithoutSubcommand = true
     ) {
         override suspend fun execute() {
             currentContext.invokedSubcommand ?: run {
-                println("Projects: ${ProjectsData.All.keys}")
+                println("Projects: ${Projects.All.keys}")
             }
         }
 
@@ -140,14 +175,14 @@ class Syncd : SyncdCommand(name = "syncd") {
                 .optional()
 
             override suspend fun execute() {
-                val id = Project.Id(name)
+                val id = me.deotime.syncd.project.Project.Id(name)
                 val selected = (directory ?: FileSelector.selectFile(
                     "Choose project directory",
                     directories = true,
                     files = false
                 )) ?: return
                 val proj = Project(id, selected.absolutePath)
-                ProjectsData.All = ProjectsData.All + (id to proj)
+                Projects.All = Projects.All + (id to proj)
                 println("Added project $name")
             }
         }
