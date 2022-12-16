@@ -22,7 +22,11 @@ fun main(args: Array<String>) {
     Syncd().subcommands(
         Syncd.Watch(),
         Syncd.Sync(),
-        Syncd.Remote(),
+        Syncd.Remote()
+            .subcommands(
+                Syncd.Remote.Add(),
+                Syncd.Remote.Delete()
+            ),
         Syncd.Changes(),
         Syncd.Host(),
         Syncd.Project().subcommands(
