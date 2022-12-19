@@ -30,8 +30,8 @@ object Host {
         return Channel<Project.Update>().also { projectHosts[id] = it }.receiveAsFlow()
     }
 
-    fun processUpdate(update: Project.Update) {
-        val project = Projects[update.project] ?: return
+    suspend fun processUpdate(update: Project.Update) {
+        val project = Projects.All.get(update.project) ?: return
         update.changes.forEach { (relative, content) ->
             val file = File(project.directory, relative)
             file.writeText(content)

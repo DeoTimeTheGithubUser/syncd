@@ -3,6 +3,7 @@ package me.deotime.syncd.remote
 import com.github.ajalt.clikt.parameters.arguments.RawArgument
 import com.github.ajalt.clikt.parameters.arguments.convert
 import com.github.ajalt.clikt.parameters.arguments.help
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import me.deotime.syncd.Syncd
 
@@ -15,7 +16,7 @@ data class Remote(val ip: String, val port: Int) {
 fun RawArgument.remote() =
     convert { input ->
 
-        Remotes[input] ?: runCatching {
+        runBlocking { Remotes.All.get(input) } ?: runCatching {
             val split = input.split(":")
             val ip = split[0]
             val port = split[1].toInt()

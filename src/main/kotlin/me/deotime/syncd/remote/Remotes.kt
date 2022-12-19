@@ -1,12 +1,12 @@
 package me.deotime.syncd.remote
 
-import me.deotime.syncd.storage.AppdataStorage
-import me.deotime.syncd.storage.Storage.Companion.property
+import me.deotime.syncd.SyncdStorage
+import me.deotime.warehouse.AppdataStorage
+import me.deotime.warehouse.map
 
-object Remotes : AppdataStorage {
+object Remotes : SyncdStorage {
     override val name = "remotes"
 
-    var All by property(emptyMap<String, Remote>())
+    val All by map<String, Remote>()
 
-    operator fun get(name: String) = All[name]
 }

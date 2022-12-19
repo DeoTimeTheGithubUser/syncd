@@ -2,7 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm") version "1.7.10"
-    kotlin("plugin.serialization") version "1.4.10"
+    kotlin("plugin.serialization") version "1.7.10"
     application
 }
 
@@ -11,6 +11,10 @@ version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
+    maven {
+        url = uri("https://repo.q64.io/rain-public")
+    }
+    mavenLocal()
 }
 
 dependencies {
@@ -36,6 +40,12 @@ dependencies {
 
     // logging
     implementation("ch.qos.logback:logback-classic:1.4.5")
+
+    // optics / algebra
+    implementation("co.q64.rain:raindrop:1.19-SNAPSHOT")
+
+    // storage
+    implementation("me.deotime.warehouse:warehouse:1.0.0")
 }
 
 tasks.test {

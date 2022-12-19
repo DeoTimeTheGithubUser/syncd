@@ -16,6 +16,7 @@ import me.deotime.syncd.remote.remote
 import me.deotime.syncd.utils.FileSelector
 import me.deotime.syncd.utils.duration
 import me.deotime.syncd.watch.watcher
+import me.deotime.warehouse.AppdataStorage
 import java.io.File
 
 fun main(args: Array<String>) {
@@ -57,6 +58,10 @@ abstract class SyncdCommand(
     open suspend fun execute() = Unit
 }
 
+interface SyncdStorage : AppdataStorage {
+    override val root: String get() = super.root + ".syncd"
+}
+
 class Syncd : SyncdCommand(name = "syncd") {
 
     class Host : SyncdCommand(
@@ -93,7 +98,7 @@ class Syncd : SyncdCommand(name = "syncd") {
             private val remote by argument().remote()
 
             override suspend fun execute() {
-                Remotes.All = Remotes.All + (name to remote)
+                Remotes.All.set(name, remote)
                 println("Added remote $name ($remote)")
             }
         }
@@ -103,9 +108,9 @@ class Syncd : SyncdCommand(name = "syncd") {
             help = "Deletes a remote.",
             description = Constants.DeleteProjectHelp
         ) {
-            private val remote by argument().remote()
+            private val remote by argument()
             override suspend fun execute() {
-                Remotes.All = Remotes.All.filter { it.value != remote }
+                Remotes.All.set(remote, null)
                 println("Removed remote $remote.")
             }
         }
@@ -165,7 +170,7 @@ class Syncd : SyncdCommand(name = "syncd") {
     ) {
         override suspend fun execute() {
             currentContext.invokedSubcommand ?: run {
-                println("Projects: ${Projects.All.keys}")
+                println("Projects: ${Projects.All.keys()}")
             }
         }
 
@@ -186,7 +191,7 @@ class Syncd : SyncdCommand(name = "syncd") {
                     files = false
                 )) ?: return
                 val proj = Project(id, selected.absolutePath)
-                Projects.All = Projects.All + (id to proj)
+                Projects.All.set(id, proj)
                 println("Added project $name")
             }
         }

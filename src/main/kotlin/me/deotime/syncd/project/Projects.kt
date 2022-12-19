@@ -1,12 +1,12 @@
 package me.deotime.syncd.project
 
-import me.deotime.syncd.storage.Storage.Companion.property
-import me.deotime.syncd.storage.SyncdStorage
+import me.deotime.syncd.SyncdStorage
+import me.deotime.warehouse.map
+import me.deotime.warehouse.property
+
 
 object Projects : SyncdStorage {
     override val name = "projects"
 
-    var All by property(emptyMap<Project.Id, Project>())
-
-    operator fun get(id: Project.Id) = All[id]
+    val All by map<Project.Id, Project>()
 }

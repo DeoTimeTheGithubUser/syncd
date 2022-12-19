@@ -38,7 +38,7 @@ object RemoteSync {
                 sendSerialized(
                     Project.Update(
                         project,
-                        Projects[project]?.modified?.associateBy { File(it).readText().toBase64() } ?: emptyMap()
+                        Projects.All.get(project)?.modified?.associateBy { File(it).readText().toBase64() } ?: emptyMap()
                     )
                 )
                 project.update { copy(modified = emptyList()) }

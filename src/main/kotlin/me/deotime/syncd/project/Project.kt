@@ -3,6 +3,7 @@ package me.deotime.syncd.project
 import com.github.ajalt.clikt.parameters.arguments.RawArgument
 import com.github.ajalt.clikt.parameters.arguments.convert
 import com.github.ajalt.clikt.parameters.arguments.help
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import me.deotime.syncd.Syncd
 
@@ -26,13 +27,13 @@ data class Project(
     )
 }
 
-inline fun Project.Id.update(new: Project.() -> Project?) {
-    val projects = Projects.All.toMutableMap()
-    projects[this]?.let(new)?.let { projects[this] = it } ?: projects.remove(this)
-    Projects.All = projects
+suspend inline fun Project.Id.update(new: Project.() -> Project?) {
+    Projects.All.get(this)?.let {
+        Projects.All.set(this, new(it))
+    }
 }
 
 fun RawArgument.project() =
     // TEMPORARY FIX UNTIL WE FIND OUT WHY INLINE CLASSES ARE BROKEN
-    convert { name -> Projects.All.entries.find { it.key.name == name }?.value ?: error("No project found \"$name\".") }
+    convert { name -> runBlocking { Projects.All.get(Project.Id(name)) } ?: error("No project found \"$name\".") }
         .help(Syncd.Constants.ProjectArgumentHelp)

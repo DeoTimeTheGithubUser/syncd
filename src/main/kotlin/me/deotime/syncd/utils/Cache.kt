@@ -11,5 +11,4 @@ class Cache<K, V> internal constructor(
 
 }
 
-@OptIn(ExperimentalTypeInference::class)
-fun <K, V> cache(@BuilderInference mapper: (K) -> V) = Cache(mapper)
+fun <K, V> cache(mapper: (K) -> V) = Cache(mapper)
